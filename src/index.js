@@ -1,9 +1,14 @@
 import Vue from 'vue';
 import Root from './vue/root.vue';
-
+import Scene from './scene/scene.js';
+import CanvasHandler from './canvasHandler.js';
 
 window.addEventListener('load', () => {
-    const data = { };
+    const scene = new Scene();
+    const canvasHandler = new CanvasHandler(scene);
+
+    const data = { 'scene': scene,
+                   'canvasHandler': canvasHandler };
 
     /* eslint-disable no-new */
     new Vue({
@@ -14,4 +19,13 @@ window.addEventListener('load', () => {
         },
         components: { 'root': Root }
     });
+
+    canvasHandler.initCanvases();
+
+    function renderLoop() {
+        canvasHandler.renderLoop();
+        requestAnimationFrame(renderLoop);
+    }
+
+    renderLoop();
 });

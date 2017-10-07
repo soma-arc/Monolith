@@ -1,13 +1,13 @@
 <template>
   <div id="body">
-    <canvas id="canvas" tabIndex="1000"></canvas>
-    <canvas id="canvas" tabIndex="1001"></canvas>
+    <canvas id="prismCanvas" tabIndex="1000"></canvas>
+    <canvas id="limitSetCanvas" tabIndex="1001"></canvas>
   </div>
 </template>
 
 <script>
     export default {
-        props: [],
+        props: ['canvasHandler', 'scene'],
     }
 </script>
 
