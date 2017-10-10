@@ -5,7 +5,7 @@ uniform sampler2D u_accTexture;
 uniform float u_textureWeight;
 uniform float u_numSamples;
 uniform vec2 u_resolution;
-uniform mat4 u_rasterToCamera;
+uniform mat4 u_projectMatrix;
 uniform mat4 u_cameraToWorld;
 
 in vec2 v_texCoord;
@@ -161,9 +161,9 @@ vec3 calcRay (const vec3 eye, const vec3 target, const vec3 up, const float fov,
 }
 
 
-void generatePerspectiveRay(vec2 sensorCoord,
+void generatePerspectiveRay(vec2 coord,
                             out vec3 rayOrg, out vec3 rayDir) {
-    vec3 pCamera = (u_rasterToCamera * vec4(sensorCoord, 0, 1)).xyz;
+    vec3 pCamera = (u_projectMatrix * vec4(coord, 0, 1)).xyz;
     rayOrg = (u_cameraToWorld * vec4(0, 0, 0, 1)).xyz;
     rayDir = (u_cameraToWorld * (vec4(normalize(pCamera), 0))).xyz;
 }
@@ -172,7 +172,12 @@ out vec4 outColor;
 void main() {
     vec3 rayOrg = vec3(0);
     vec3 rayDir = vec3(0);
-    generatePerspectiveRay(gl_FragCoord.xy, rayOrg, rayDir);
-    vec3 texCol = texture(u_accTexture, gl_FragCoord.xy / u_resolution);
+    float aspect = u_resolution.x / u_resolution.y;
+    vec2 coord = (aspect > 1.0) ?
+        (gl_FragCoord.xy / u_resolution.xy) * vec2(2. * aspect, 2.) - vec2(aspect, 1):
+        (gl_FragCoord.xy / u_resolution.xy) * vec2(2., 2. / aspect) - vec2(1, 1. / aspect);
+
+    generatePerspectiveRay(coord, rayOrg, rayDir);
+    vec4 texCol = texture(u_accTexture, gl_FragCoord.xy / u_resolution);
 	outColor = vec4(mix(vec4(computeColor(rayOrg, rayDir), 1), texCol, u_textureWeight));
 }

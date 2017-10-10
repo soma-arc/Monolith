@@ -2,15 +2,17 @@ import Canvas from './canvas.js';
 import Vec2 from './geometry/vector2.js';
 import Vec3 from './geometry/vector3.js';
 import Scene from './scene/scene.js';
-import { CameraOnSphere, FlyCamera } from './camera.js';
 import { GetWebGL2Context, CreateSquareVbo, AttachShader,
          LinkProgram, CreateRGBATextures } from './glUtils';
+import UniformLocation from './uniformLocation.js';
+import Camera from './scene/camera.js';
 
 const RENDER_VERTEX = require('./shaders/render.vert');
 const RENDER_FRAGMENT = require('./shaders/render.frag');
 const RENDER_FLIPPED_VERTEX = require('./shaders/renderFlipped.vert');
 
 const RENDER_TEST_FRAG = require('./shaders/render-test.frag');
+
 
 export default class Canvas3D extends Canvas {
     /**
@@ -21,8 +23,11 @@ export default class Canvas3D extends Canvas {
     constructor(canvasId, scene) {
         super(canvasId);
         this.scene = scene;
+        this.camera = new Camera(new Vec3(4, 2, 0),
+                                 new Vec3(0, 0, 0),
+                                 new Vec3(0, 1, 0),
+                                 60);
 //        this.pixelRatio = 1.0; //window.devicePixelRatio;
-        this.resetCamera();
 
         this.gl = GetWebGL2Context(this.canvas);
         this.vertexBuffer = CreateSquareVbo(this.gl);
@@ -34,6 +39,7 @@ export default class Canvas3D extends Canvas {
         };
 
         this.initRenderCanvasPrograms();
+        this.initRenderTextureProgram();
 
         this.texturesFrameBuffer = this.gl.createFramebuffer();
         this.initRenderTextures();
@@ -49,6 +55,10 @@ export default class Canvas3D extends Canvas {
 
         this.aoEps = 0.0968;
         this.aoIntensity = 2.0;
+
+        this.accTexture = null;
+        this.renderWidth = 0;
+        this.renderHeight = 0;
     }
 
     initRenderTextureProgram() {
@@ -59,7 +69,7 @@ export default class Canvas3D extends Canvas {
                      RENDER_TEST_FRAG,
                      this.renderTextureProgram, this.gl.FRAGMENT_SHADER);
         LinkProgram(this.gl, this.renderTextureProgram);
-        this.getRenderUniformLocations();
+        this.getRenderUniformLocations(this.renderTextureProgram);
     }
 
     /**
@@ -107,9 +117,45 @@ export default class Canvas3D extends Canvas {
 
     getRenderUniformLocations(program) {
         this.uniLocations = [];
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_accTexture',
+            (uniLoc) => {
+                this.gl.activeTexture(this.gl.TEXTURE0);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.accTexture);
+                this.gl.uniform1i(uniLoc, 0);
+            }));
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_textureWeight',
+            (uniLoc) => {
+                this.gl.uniform1f(uniLoc, this.numSamples / (this.numSamples + 1));
+            }));
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_numSamples',
+            (uniLoc) => {
+                this.gl.uniform1f(uniLoc, this.numSamples);
+            }));
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_resolution',
+            (uniLoc) => {
+                this.gl.uniform2f(uniLoc,
+                                  this.renderWidth,
+                                  this.renderHeight);
+            }));
+        this.camera.getUniformLocations(this.uniLocations, this.gl, program);
     }
 
     setRenderUniformValues(width, height, texture) {
+        this.renderWidth = width;
+        this.renderHeight = height;
+        this.accTexture = texture;
+
+        for (const u of this.uniLocations) {
+            u.setValue();
+        }
     }
 
     renderToTexture(textures, width, height) {
