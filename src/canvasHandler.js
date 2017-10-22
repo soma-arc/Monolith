@@ -8,8 +8,9 @@ export default class CanvasHandler {
      */
     constructor(scene) {
         this.scene = scene;
-        this.prismCanvas = undefined;
-        this.limitSetCanvas = undefined;
+
+        this.prismCanvas = new Canvas3D('prismCanvas', this.scene);
+        this.limitSetCanvas = new Canvas3D('limitSetCanvas', this.scene);
     }
 
     /**
@@ -17,8 +18,11 @@ export default class CanvasHandler {
      * Canvases should be initialized after creation of Vue instance
      */
     initCanvases() {
-        this.prismCanvas = new Canvas3D('prismCanvas', this.scene);
-        this.limitSetCanvas = new Canvas3D('limitSetCanvas', this.scene);
+        this.prismCanvas.init();
+        this.limitSetCanvas.init();
+
+        this.prismCanvas.render();
+        this.limitSetCanvas.render();
     }
 
     renderLoop() {

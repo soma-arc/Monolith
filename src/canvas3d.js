@@ -13,6 +13,7 @@ const RENDER_FLIPPED_VERTEX = require('./shaders/renderFlipped.vert');
 
 const RENDER_TEST_FRAG = require('./shaders/render-test.frag');
 
+const RENDER_SPHAIRAHEDRAL_PRISM_TMPL = require('./shaders/renderSphairahedralPrism.njk.frag');
 
 export default class Canvas3D extends Canvas {
     /**
@@ -29,20 +30,11 @@ export default class Canvas3D extends Canvas {
                                  60);
 //        this.pixelRatio = 1.0; //window.devicePixelRatio;
 
-        this.gl = GetWebGL2Context(this.canvas);
-        this.vertexBuffer = CreateSquareVbo(this.gl);
-
         this.mouseState = {
             isPressing: false,
             prevPosition: new Vec2(0, 0),
             button: -1
         };
-
-        this.initRenderCanvasPrograms();
-        this.initRenderTextureProgram();
-
-        this.texturesFrameBuffer = this.gl.createFramebuffer();
-        this.initRenderTextures();
 
         this.fudgeFactor = 0.2;
         this.marchingThreshold = 0.00001;
@@ -61,12 +53,26 @@ export default class Canvas3D extends Canvas {
         this.renderHeight = 0;
     }
 
+    init() {
+        this.canvas = document.getElementById(this.canvasId);
+        this.gl = GetWebGL2Context(this.canvas);
+        this.vertexBuffer = CreateSquareVbo(this.gl);
+
+        this.addEventListeners();
+        
+        this.initRenderCanvasPrograms();
+        this.initRenderTextureProgram();
+
+        this.texturesFrameBuffer = this.gl.createFramebuffer();
+        this.initRenderTextures();
+    }
+
     initRenderTextureProgram() {
         this.numSamples = 0;
         this.renderTextureProgram = this.gl.createProgram();
         AttachShader(this.gl, RENDER_VERTEX, this.renderTextureProgram, this.gl.VERTEX_SHADER);
         AttachShader(this.gl,
-                     RENDER_TEST_FRAG,
+                     RENDER_SPHAIRAHEDRAL_PRISM_TMPL.render(),
                      this.renderTextureProgram, this.gl.FRAGMENT_SHADER);
         LinkProgram(this.gl, this.renderTextureProgram);
         this.getRenderUniformLocations(this.renderTextureProgram);
