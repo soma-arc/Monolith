@@ -24,11 +24,11 @@ export default class Canvas3D extends Canvas {
     constructor(canvasId, scene) {
         super(canvasId);
         this.scene = scene;
-        this.camera = new Camera(new Vec3(4, 2, 0),
+        this.camera = new Camera(new Vec3(8, 0, 0),
                                  new Vec3(0, 0, 0),
-                                 new Vec3(0, 1, 0),
+                                 new Vec3(1, 1, 0),
                                  60);
-//        this.pixelRatio = 1.0; //window.devicePixelRatio;
+        // this.pixelRatio = 1.0; //window.devicePixelRatio;
 
         this.mouseState = {
             isPressing: false,
@@ -59,7 +59,7 @@ export default class Canvas3D extends Canvas {
         this.vertexBuffer = CreateSquareVbo(this.gl);
 
         this.addEventListeners();
-        
+
         this.initRenderCanvasPrograms();
         this.initRenderTextureProgram();
 
@@ -72,7 +72,7 @@ export default class Canvas3D extends Canvas {
         this.renderTextureProgram = this.gl.createProgram();
         AttachShader(this.gl, RENDER_VERTEX, this.renderTextureProgram, this.gl.VERTEX_SHADER);
         AttachShader(this.gl,
-                     RENDER_SPHAIRAHEDRAL_PRISM_TMPL.render(),
+                     RENDER_SPHAIRAHEDRAL_PRISM_TMPL.render(this.scene.getShaderContext()),
                      this.renderTextureProgram, this.gl.FRAGMENT_SHADER);
         LinkProgram(this.gl, this.renderTextureProgram);
         this.getRenderUniformLocations(this.renderTextureProgram);
@@ -104,7 +104,7 @@ export default class Canvas3D extends Canvas {
         this.renderTextures = CreateRGBATextures(this.gl, this.canvas.width,
                                                  this.canvas.height, 2);
         this.lowResTextures = CreateRGBATextures(this.gl,
-                                                this.canvas.width * this.lowResRatio,
+                                                 this.canvas.width * this.lowResRatio,
                                                  this.canvas.height * this.lowResRatio, 2);
     }
 
@@ -152,6 +152,7 @@ export default class Canvas3D extends Canvas {
                                   this.renderHeight);
             }));
         this.camera.getUniformLocations(this.uniLocations, this.gl, program);
+        this.scene.getUniformLocations(this.uniLocations, this.gl, program);
     }
 
     setRenderUniformValues(width, height, texture) {
@@ -215,6 +216,7 @@ export default class Canvas3D extends Canvas {
     mouseWheelListener(event) {
         event.preventDefault();
         this.numSamples = 0;
+        this.camera.mouseWheel(event.deltaY);
         this.callRender();
     }
 
@@ -226,6 +228,7 @@ export default class Canvas3D extends Canvas {
         this.mouseState.prevPosition = mouse
         this.mouseState.button = event.button;
         if (event.button === Canvas.MOUSE_BUTTON_LEFT) {
+            this.camera.mouseLeftDown(mouse);
         } else if (event.button === Canvas.MOUSE_BUTTON_RIGHT) {
         }
     }
@@ -243,7 +246,9 @@ export default class Canvas3D extends Canvas {
         if (!this.mouseState.isPressing) return;
         const mouse = this.calcCanvasCoord(event.clientX, event.clientY);
         if (this.mouseState.button === Canvas.MOUSE_BUTTON_LEFT) {
+            this.camera.mouseLeftMove(mouse, this.mouseState.prevPosition);
             this.isRendering = true;
+            this.callRender();
         } else if (this.mouseState.button === Canvas.MOUSE_BUTTON_RIGHT) {
             this.isRendering = true;
         }

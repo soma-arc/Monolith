@@ -45,3 +45,23 @@ float DistSphere(const vec3 pos, const Sphere sphere) {
     return distance(pos, sphere.center) - sphere.r.x;
 }
 
+float DistInfPrism(vec3 pos) {
+    float d = -1.;
+	{% for n in range(0, numGenPlanes) %}
+	d = max(DistPlane(pos, u_genPlanes[{{ n }}].origin,
+					  u_genPlanes[{{ n }}].normal),
+			d);
+	{% endfor %}
+
+    {% for n in range(0, numPrismSpheres) %}
+	d = max(-DistSphere(pos, u_prismSpheres[{{ n }}]),
+			d);
+	{% endfor %}
+
+    {% for n in range(0, numDividePlanes) %}
+    d = max(DistPlane(pos, u_dividePlanes[{{ n }}].origin,
+					  u_dividePlanes[{{ n }}].normal),
+			d);
+    {% endfor %}
+    return d;
+}

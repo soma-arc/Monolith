@@ -5,3 +5,12 @@ uniform vec2 u_resolution;
 uniform mat4 u_projectMatrix;
 uniform mat4 u_cameraToWorld;
 
+{% if numGenSpheres > 0 %}
+uniform Sphere u_genSpheres[{{ numGenSpheres }}];
+{% endif %}
+{% if numGenPlanes > 0 %}
+uniform Plane u_genPlanes[{{ numGenPlanes }}];
+{% endif %}
+{% if numDividePlanes > 0 %}
+uniform Plane u_dividePlanes[{{ numDividePlanes }}];
+{% endif %}

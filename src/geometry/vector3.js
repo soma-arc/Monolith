@@ -158,6 +158,16 @@ export default class Vec3 {
 
     /**
      *
+     * @param {Vec3} v1
+     * @param {Vec3} v2
+     * @return {Number}
+     */
+    static distance(v1, v2) {
+        return Math.sqrt(v1.sub(v2).length());
+    }
+
+    /**
+     *
      * @param {Vec3} v
      * @returns {Boolean}
      */

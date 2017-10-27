@@ -5,8 +5,50 @@ precision mediump float;
 {% include "./uniforms.njk.frag" %}
 {% include "./raytrace.njk.frag" %}
 
+const int ID_PRISM = 0;
+
+vec4 distFunc(const vec3 pos) {
+    vec4 d = vec4(MAX_FLOAT, -1, -1, -1);
+    d = DistUnion(d,
+                  vec4(DistInfPrism(pos), ID_PRISM, -1, -1));
+    return d;
+}
+
+const vec2 NORMAL_COEFF = vec2(0.0001, 0.);
+vec3 computeNormal(const vec3 p) {
+    return normalize(vec3(distFunc(p + NORMAL_COEFF.xyy).x - distFunc(p - NORMAL_COEFF.xyy).x,
+                          distFunc(p + NORMAL_COEFF.yxy).x - distFunc(p - NORMAL_COEFF.yxy).x,
+                          distFunc(p + NORMAL_COEFF.yyx).x - distFunc(p - NORMAL_COEFF.yyx).x));
+}
+
 const vec3 AMBIENT_FACTOR = vec3(0.1);
 const vec3 LIGHT_DIR = normalize(vec3(1, 1, 0));
+
+const int MAX_MARCHING_LOOP = 3000;
+const float MARCHING_THRESHOLD = 0.001;
+void march(const vec3 rayOrg, const vec3 rayDir,
+           inout IsectInfo isectInfo) {
+    float rayLength = 0.;
+    vec3 rayPos = rayOrg + rayDir * rayLength;
+    vec4 dist = vec4(-1);
+    for(int i = 0 ; i < MAX_MARCHING_LOOP ; i++) {
+        if(rayLength > isectInfo.tmax) break;
+        dist = distFunc(rayPos);
+        rayLength += dist.x;
+        rayPos = rayOrg + rayDir * rayLength;
+        if(dist.x < MARCHING_THRESHOLD) {
+            isectInfo.objId = int(dist.y);
+            //isectInfo.objIndex = int(dist.z);
+            //isectInfo.objComponentId = int(dist.w);
+            isectInfo.matColor = vec3(0.7);
+            isectInfo.intersection = rayPos;
+            isectInfo.normal = computeNormal(rayPos);
+            isectInfo.tmin = rayLength;
+            isectInfo.hit = true;
+            break;
+        }
+    }
+}
 
 vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
     IsectInfo isectInfo = NewIsectInfo();
@@ -17,34 +59,27 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
     float transparency = 0.8;
     float coeff = 1.;
 
-    Sphere s1;
-    s1.center = vec3(0);
-    s1.r.x = 0.8;
-    Sphere s2;
-    s2.center = vec3(1, 0, 0);
-    s2.r.x = 0.1;
-    IntersectSphere(0, 0, -1,
-                    vec3(0.3, 1., 1.), s1,
-                    rayOrg, rayDir, isectInfo);
-    IntersectSphere(0, 0, -1,
-                    vec3(1.0, 0., 0.), s2,
-                    rayOrg, rayDir, isectInfo);
+    for(int depth = 0 ; depth < 8; depth++){
+        march(rayPos, rayDir, isectInfo);
+        if(isectInfo.hit) {
+            vec3 matColor = isectInfo.matColor;
+            vec3 diffuse =  clamp(dot(isectInfo.normal, LIGHT_DIR), 0., 1.) * matColor;
+            vec3 ambient = matColor * AMBIENT_FACTOR;
+            bool transparent = false;
+            transparent = false;
 
-    if(isectInfo.hit) {
-        vec3 matColor = isectInfo.matColor;
-        vec3 diffuse =  clamp(dot(isectInfo.normal, LIGHT_DIR), 0., 1.) * matColor;
-        vec3 ambient = matColor * AMBIENT_FACTOR;
-        bool transparent = false;
-        transparent = false;
-
-        if(transparent) {
-            coeff *= transparency;
-            l += (diffuse + ambient) * coeff;
-            rayPos = isectInfo.intersection + rayDir * 0.000001 * 2.;
-            isectInfo = NewIsectInfo();
-        } else {
-            l += (diffuse + ambient) * coeff;
+            if(transparent) {
+                coeff *= transparency;
+                l += (diffuse + ambient) * coeff;
+                rayPos = isectInfo.intersection + rayDir * 0.000001 * 2.;
+                isectInfo = NewIsectInfo();
+                continue;
+            } else {
+                l += (diffuse + ambient) * coeff;
+                break;
+            }
         }
+        break;
     }
     
     return vec4(l, alpha);
