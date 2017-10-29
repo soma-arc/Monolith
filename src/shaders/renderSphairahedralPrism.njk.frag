@@ -2,10 +2,12 @@
 precision mediump float;
 
 {% include "./struct.njk.frag" %}
+{% include "./color.njk.frag" %}
 {% include "./uniforms.njk.frag" %}
 {% include "./raytrace.njk.frag" %}
 
 const int ID_PRISM = 0;
+const int ID_GEN_SPHERE = 1;
 
 vec4 distFunc(const vec3 pos) {
     vec4 d = vec4(MAX_FLOAT, -1, -1, -1);
@@ -61,12 +63,19 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
 
     for(int depth = 0 ; depth < 8; depth++){
         march(rayPos, rayDir, isectInfo);
+
+        {% for n in range(0, numGenSpheres) %}
+        IntersectSphere(ID_GEN_SPHERE, {{ n }}, -1,
+                        Hsv2rgb(float({{ n }}) * 0.3, 1., 1.),
+                        u_genSpheres[{{ n }}],
+                        rayPos, rayDir, isectInfo);
+        {% endfor %}
+
         if(isectInfo.hit) {
             vec3 matColor = isectInfo.matColor;
             vec3 diffuse =  clamp(dot(isectInfo.normal, LIGHT_DIR), 0., 1.) * matColor;
             vec3 ambient = matColor * AMBIENT_FACTOR;
-            bool transparent = false;
-            transparent = false;
+            bool transparent = (isectInfo.objId == ID_GEN_SPHERE) ? true : false;
 
             if(transparent) {
                 coeff *= transparency;
@@ -81,7 +90,7 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
         }
         break;
     }
-    
+
     return vec4(l, alpha);
 }
 

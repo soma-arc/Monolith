@@ -53,8 +53,8 @@ float DistInfPrism(vec3 pos) {
 			d);
 	{% endfor %}
 
-    {% for n in range(0, numPrismSpheres) %}
-	d = max(-DistSphere(pos, u_prismSpheres[{{ n }}]),
+    {% for n in range(0, numGenSpheres) %}
+	d = max(-DistSphere(pos, u_genSpheres[{{ n }}]),
 			d);
 	{% endfor %}
 

@@ -1,6 +1,7 @@
 import UniformLocation from '../uniformLocation.js';
 import Vec3 from '../geometry/vector3.js';
 import Plane from './plane.js';
+import Sphere from './sphere.js';
 
 const RT_3 = Math.sqrt(3);
 const RT_3_INV = 1 / RT_3;
@@ -10,7 +11,7 @@ export default class Scene {
         this.cameras = [];
 
         this.dividePlanes = [];
-        this.genSpheres = [];
+        this.genSpheres = [new Sphere(0, 0, 0, 1)];
         this.genPlanes = Scene.PRISM_PLANES_333;
     }
 
