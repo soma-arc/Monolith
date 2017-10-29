@@ -4,6 +4,8 @@ uniform float u_numSamples;
 uniform vec2 u_resolution;
 uniform mat4 u_projectMatrix;
 uniform mat4 u_cameraToWorld;
+uniform int u_maxIISIterations;
+uniform float u_fudgeFactor;
 
 {% if numGenSpheres > 0 %}
 uniform Sphere u_genSpheres[{{ numGenSpheres }}];

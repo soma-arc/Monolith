@@ -65,3 +65,49 @@ float DistInfPrism(vec3 pos) {
     {% endfor %}
     return d;
 }
+
+void SphereInvert(inout vec3 pos, inout float dr,
+                         const Sphere s) {
+    vec3 diff = pos - s.center;
+    float lenSq = dot(diff, diff);
+    float k = s.r.y / lenSq;
+    dr *= k; // (r * r) / lenSq
+    pos = (diff * k) + s.center;
+}
+
+
+float G_IISInvNum = 0.;
+float DistLimiSet(vec3 pos) {
+    float invNum = 0.;
+    float dr = 1.;
+    float d = 0.;
+    for(int i = 0; i< 1000; i++) {
+        if(u_maxIISIterations <= i) break;
+        bool inFund = true;
+        {% for n in range(0, numGenSpheres) %}
+		if(distance(pos, u_genSpheres[{{ n }}].center) < u_genSpheres[{{ n }}].r.x) {
+            invNum++;
+			SphereInvert(pos, dr, u_genSpheres[{{ n }}]);
+			continue;
+		}
+		{% endfor %}
+
+        {% for n in range(0, numGenPlanes) %}
+		pos -= u_genPlanes[{{ n }}].origin;
+		d = dot(pos, u_genPlanes[{{ n }}].normal);
+		if(d > 0.) {
+            invNum++;
+			pos -= 2. * d * u_genPlanes[{{ n }}].normal;
+			pos += u_genPlanes[{{ n }}].origin;
+			continue;
+		}
+		pos += u_genPlanes[{{ n }}].origin;
+		{% endfor %}
+
+        if(inFund)
+            break;
+    }
+
+    G_IISInvNum = invNum;
+    return DistInfPrism(pos) / abs(dr) * u_fudgeFactor;
+}

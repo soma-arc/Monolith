@@ -10,8 +10,12 @@ export default class Scene {
     constructor() {
         this.cameras = [];
 
-        this.dividePlanes = [];
-        this.genSpheres = [new Sphere(0, 0, 0, 1)];
+        this.dividePlanes = [new Plane(new Vec3(0, 0, 0),
+                                       new Vec3(0, 0, 0),
+                                       new Vec3(0, 0, 0),
+                                       new Vec3(0, 1, 0))];
+        this.genSpheres = [new Sphere(0, 0, 0.6, 1),
+                           new Sphere(0.4, -1.0, 0, 1.3)];
         this.genPlanes = Scene.PRISM_PLANES_333;
     }
 
@@ -79,9 +83,9 @@ export default class Scene {
                 'u_dividePlanes['+ i +'].origin',
                 (uniLoc) => {
                     gl.uniform3f(uniLoc,
-                                 this.dividePlanes[i].origin.x,
-                                 this.dividePlanes[i].origin.y,
-                                 this.dividePlanes[i].origin.z);
+                                 this.dividePlanes[i].p1.x,
+                                 this.dividePlanes[i].p1.y,
+                                 this.dividePlanes[i].p1.z);
                 }
             ));
             uniLocations.push(new UniformLocation(

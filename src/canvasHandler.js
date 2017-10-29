@@ -1,6 +1,9 @@
 import Scene from './scene/scene.js';
 import Canvas3D from './canvas3d.js';
 
+const RENDER_SPHAIRAHEDRAL_PRISM_TMPL = require('./shaders/renderSphairahedralPrism.njk.frag');
+const RENDER_LIMIT_SET_TMPL = require('./shaders/renderLimitSet.njk.frag');
+
 export default class CanvasHandler {
     /**
      *
@@ -9,8 +12,10 @@ export default class CanvasHandler {
     constructor(scene) {
         this.scene = scene;
 
-        this.prismCanvas = new Canvas3D('prismCanvas', this.scene);
-        this.limitSetCanvas = new Canvas3D('limitSetCanvas', this.scene);
+        this.prismCanvas = new Canvas3D('prismCanvas', this.scene,
+                                        RENDER_SPHAIRAHEDRAL_PRISM_TMPL);
+        this.limitSetCanvas = new Canvas3D('limitSetCanvas', this.scene,
+                                           RENDER_LIMIT_SET_TMPL);
     }
 
     /**

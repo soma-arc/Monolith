@@ -13,17 +13,17 @@ const RENDER_FLIPPED_VERTEX = require('./shaders/renderFlipped.vert');
 
 const RENDER_TEST_FRAG = require('./shaders/render-test.frag');
 
-const RENDER_SPHAIRAHEDRAL_PRISM_TMPL = require('./shaders/renderSphairahedralPrism.njk.frag');
-
 export default class Canvas3D extends Canvas {
     /**
      *
      * @param {String} canvasId
      * @param {Scene} scene
+     * @param {} shaderTemplate
      */
-    constructor(canvasId, scene) {
+    constructor(canvasId, scene, shaderTemplate) {
         super(canvasId);
         this.scene = scene;
+        this.shaderTemplate = shaderTemplate;
         this.camera = new Camera(new Vec3(8, 0, 0),
                                  new Vec3(0, 0, 0),
                                  new Vec3(1, 1, 0),
@@ -72,7 +72,7 @@ export default class Canvas3D extends Canvas {
         this.renderTextureProgram = this.gl.createProgram();
         AttachShader(this.gl, RENDER_VERTEX, this.renderTextureProgram, this.gl.VERTEX_SHADER);
         AttachShader(this.gl,
-                     RENDER_SPHAIRAHEDRAL_PRISM_TMPL.render(this.scene.getShaderContext()),
+                     this.shaderTemplate.render(this.scene.getShaderContext()),
                      this.renderTextureProgram, this.gl.FRAGMENT_SHADER);
         LinkProgram(this.gl, this.renderTextureProgram);
         this.getRenderUniformLocations(this.renderTextureProgram);
@@ -150,6 +150,20 @@ export default class Canvas3D extends Canvas {
                 this.gl.uniform2f(uniLoc,
                                   this.renderWidth,
                                   this.renderHeight);
+            }));
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_maxIISIterations',
+            (uniLoc) => {
+                this.gl.uniform1i(uniLoc,
+                                  50);
+            }));
+        this.uniLocations.push(new UniformLocation(
+            this.gl, program,
+            'u_fudgeFactor',
+            (uniLoc) => {
+                this.gl.uniform1f(uniLoc,
+                                  0.2);
             }));
         this.camera.getUniformLocations(this.uniLocations, this.gl, program);
         this.scene.getUniformLocations(this.uniLocations, this.gl, program);
