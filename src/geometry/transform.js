@@ -224,6 +224,12 @@ export default class Transform {
         return Transform.scale(1, 1, 1 / (far - near)).mult(Transform.translate(0, 0, -near));
     }
 
+    /**
+     *
+     * @param {Number} width
+     * @param {Number} height
+     * @returns {Transform}
+     */
     static rasterToScreen(width, height) {
         const aspect = width / height;
         let screenToRaster;
@@ -233,6 +239,31 @@ export default class Transform {
                 .mult(Transform.translate(aspect, 1, 0));
         } else {
             screenToRaster = Transform.scale(width, height, 1)
+                .mult(Transform.scale(1 / 2, 1 / (2 / aspect), 1))
+                .mult(Transform.translate(1, 1 / aspect, 0));
+        }
+        return screenToRaster.inverse();
+    }
+
+    /**
+     * Generate raster to screen transform.
+     * positive y-direction of canvas coordinates are
+     * opposite to gl_FragCoord.
+     * @param {Number} width
+     * @param {Number} height
+     * @returns {Transform}
+     */
+    static canvasRasterToScreen(width, height) {
+        const aspect = width / height;
+        let screenToRaster;
+        if (aspect > 1.0) {
+            screenToRaster = Transform.scale(width, -height, 1)
+                .mult(Transform.translate(0, -1, 0))
+                .mult(Transform.scale(1 / (2 * aspect), 1 / 2, 1))
+                .mult(Transform.translate(aspect, 1, 0));
+        } else {
+            screenToRaster = Transform.scale(width, -height, 1)
+                .mult(Transform.translate(0, -1, 0))
                 .mult(Transform.scale(1 / 2, 1 / (2 / aspect), 1))
                 .mult(Transform.translate(1, 1 / aspect, 0));
         }

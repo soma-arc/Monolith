@@ -2,6 +2,7 @@ import Vec2 from '../geometry/vector2.js';
 import Vec3 from '../geometry/vector3.js';
 import Transform from '../geometry/transform.js';
 import UniformLocation from '../uniformLocation.js';
+import Ray from '../geometry/ray.js';
 
 export default class Camera {
     constructor(pos, target, up, fov) {
@@ -103,5 +104,17 @@ export default class Camera {
     update() {
         this.viewM = Transform.lookAt(this.pos, this.target, this.up);
         this.projectM = Transform.perspective(this.fov, 0.01, 1000);
+    }
+
+    /**
+     *
+     * @param {Vec2} coord
+     * @param {Transform} rasterToScreen
+     */
+    generatePerspectiveRay(coord, rasterToScreen) {
+        const rasterToCamera = this.projectM.inverse().mult(rasterToScreen);
+        const pCamera = rasterToCamera.applyToPoint(new Vec3(coord.x, coord.y, 0));
+        return new Ray(this.pos,
+                       this.viewM.inverse().applyToVec(pCamera.normalize()));
     }
 }

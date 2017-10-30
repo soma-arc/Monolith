@@ -6,6 +6,7 @@ import { GetWebGL2Context, CreateSquareVbo, AttachShader,
          LinkProgram, CreateRGBATextures } from './glUtils';
 import UniformLocation from './uniformLocation.js';
 import Camera from './scene/camera.js';
+import Transform from './geometry/transform.js';
 
 const RENDER_VERTEX = require('./shaders/render.vert');
 const RENDER_FRAGMENT = require('./shaders/render.frag');
@@ -244,6 +245,8 @@ export default class Canvas3D extends Canvas {
         if (event.button === Canvas.MOUSE_BUTTON_LEFT) {
             this.camera.mouseLeftDown(mouse);
         } else if (event.button === Canvas.MOUSE_BUTTON_RIGHT) {
+            const t = Transform.canvasRasterToScreen(this.canvas.width, this.canvas.height);
+            this.scene.castRay(this.camera, mouse, t);
         }
     }
 

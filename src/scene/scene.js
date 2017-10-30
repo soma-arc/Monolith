@@ -2,6 +2,7 @@ import UniformLocation from '../uniformLocation.js';
 import Vec3 from '../geometry/vector3.js';
 import Plane from './plane.js';
 import Sphere from './sphere.js';
+import IsectInfo from './isectInfo.js';
 
 const RT_3 = Math.sqrt(3);
 const RT_3_INV = 1 / RT_3;
@@ -100,6 +101,16 @@ export default class Scene {
             ));
         }
         return uniLocations;
+    }
+
+    castRay(camera, coord, rasterToScreen) {
+        const ray = camera.generatePerspectiveRay(coord, rasterToScreen);
+        console.log(ray);
+        const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
+        for (const s of this.genSpheres) {
+            s.computeIntersection(ray, isectInfo);
+        }
+        console.log(isectInfo.hitObject);
     }
 
     static get PRISM_PLANES_333 () {

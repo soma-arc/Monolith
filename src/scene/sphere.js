@@ -1,5 +1,7 @@
 import Vec3 from '../geometry/vector3.js';
 import Plane from './plane.js';
+import Ray from '../geometry/ray.js';
+import IsectInfo from './isectInfo.js';
 
 export default class Sphere {
     /**
@@ -161,5 +163,29 @@ export default class Sphere {
                                  this.invertOnPoint(plane.p2),
                                  this.invertOnPoint(plane.p3),
                                  this.center);
+    }
+
+    /**
+     *
+     * @param {Ray} ray
+     * @param {IsectInfo} isectInfo
+     */
+    computeIntersection(ray, isectInfo) {
+        const v = ray.o.sub(this.center);
+        const b = Vec3.dot(ray.d, v)
+        const c = Vec3.dot(v, v) - this.r * this.r;
+        const d = b * b - c;
+        if (d >= 0) {
+            const s = Math.sqrt(d);
+            let t = -b - s;
+            if (t < isectInfo.THRESHOLD) t = -b + s;
+            if (0 < t && t < isectInfo.tmin) {
+                isectInfo.setInfo(t, this, Sphere.BODY);
+            }
+        }
+    }
+
+    static get BODY() {
+        return 0;
     }
 }
