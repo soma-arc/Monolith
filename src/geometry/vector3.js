@@ -163,7 +163,7 @@ export default class Vec3 {
      * @return {Number}
      */
     static distance(v1, v2) {
-        return Math.sqrt(v1.sub(v2).length());
+        return v1.sub(v2).length();
     }
 
     /**
