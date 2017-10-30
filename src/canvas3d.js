@@ -246,7 +246,8 @@ export default class Canvas3D extends Canvas {
             this.camera.mouseLeftDown(mouse);
         } else if (event.button === Canvas.MOUSE_BUTTON_RIGHT) {
             const t = Transform.canvasRasterToScreen(this.canvas.width, this.canvas.height);
-            this.scene.castRay(this.camera, mouse, t);
+            const hit = this.scene.selectObj(this.camera, mouse, t);
+            if (hit) this.callRender();
         }
     }
 

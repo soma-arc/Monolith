@@ -61,6 +61,15 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
     float transparency = 0.8;
     float coeff = 1.;
 
+    if(u_selectingObj) {
+        IntersectAxisCylinders(-1, -1,
+                               u_axisCylinders.origin,
+                               u_axisCylinders.cylinderR,
+                               u_axisCylinders.cylinderLen,
+                               rayPos, rayDir, isectInfo);
+        if (isectInfo.hit) return vec4(isectInfo.matColor, 1);
+    }
+
     for(int depth = 0 ; depth < 8; depth++){
         march(rayPos, rayDir, isectInfo);
 

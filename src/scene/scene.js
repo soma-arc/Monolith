@@ -18,6 +18,10 @@ export default class Scene {
         this.genSpheres = [new Sphere(0, 0, 0.6, 1),
                            new Sphere(0.4, -1.0, 0, 1.3)];
         this.genPlanes = Scene.PRISM_PLANES_333;
+
+        this.selectingObj = undefined;
+        this.axisCylinderR = 0.1;
+        this.axisCylinderLen = 2;
     }
 
     addCamera(camera) {
@@ -33,6 +37,39 @@ export default class Scene {
     }
 
     getUniformLocations(uniLocations, gl, program) {
+        uniLocations.push(new UniformLocation(
+            gl, program,
+            'u_selectingObj',
+            (uniLoc) => {
+                gl.uniform1i(uniLoc, this.selectingObj !== undefined);
+            }
+        ));
+        uniLocations.push(new UniformLocation(
+            gl, program,
+            'u_axisCylinders.origin',
+            (uniLoc) => {
+                if (this.selectingObj !== undefined) {
+                    gl.uniform3f(uniLoc,
+                                 this.selectingObj.center.x,
+                                 this.selectingObj.center.y,
+                                 this.selectingObj.center.z);
+                }
+            }
+        ));
+        uniLocations.push(new UniformLocation(
+            gl, program,
+            'u_axisCylinders.cylinderR',
+            (uniLoc) => {
+                gl.uniform1f(uniLoc, this.axisCylinderR);
+            }
+        ));
+        uniLocations.push(new UniformLocation(
+            gl, program,
+            'u_axisCylinders.cylinderLen',
+            (uniLoc) => {
+                gl.uniform1f(uniLoc, this.axisCylinderLen);
+            }
+        ));
         for (let i = 0; i < this.genSpheres.length; i++) {
             uniLocations.push(new UniformLocation(
                 gl, program,
@@ -103,14 +140,31 @@ export default class Scene {
         return uniLocations;
     }
 
+    /**
+     *
+     * @param {Camera} camera
+     * @param {Vec2} coord
+     * @param {Transform} rasterToScreen
+     */
     castRay(camera, coord, rasterToScreen) {
         const ray = camera.generatePerspectiveRay(coord, rasterToScreen);
-        console.log(ray);
         const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
         for (const s of this.genSpheres) {
             s.computeIntersection(ray, isectInfo);
         }
-        console.log(isectInfo.hitObject);
+        return isectInfo;
+    }
+
+    /**
+     *
+     * @param {Camera} camera
+     * @param {Vec2} coord
+     * @param {Transform} rasterToScreen
+     */
+    selectObj(camera, coord, rasterToScreen) {
+        const isectInfo = this.castRay(camera, coord, rasterToScreen);
+        this.selectingObj = isectInfo.hitObject;
+        return isectInfo.hitObject !== undefined;
     }
 
     static get PRISM_PLANES_333 () {

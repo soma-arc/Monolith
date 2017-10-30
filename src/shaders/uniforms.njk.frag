@@ -6,6 +6,8 @@ uniform mat4 u_projectMatrix;
 uniform mat4 u_cameraToWorld;
 uniform int u_maxIISIterations;
 uniform float u_fudgeFactor;
+uniform bool u_selectingObj;
+uniform AxisCylinders u_axisCylinders;
 
 {% if numGenSpheres > 0 %}
 uniform Sphere u_genSpheres[{{ numGenSpheres }}];

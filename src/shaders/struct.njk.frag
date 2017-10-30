@@ -8,6 +8,11 @@ struct Plane {
     vec3 normal;
 };
 
+struct AxisCylinders {
+    vec3 origin;
+    float cylinderR;
+    float cylinderLen;
+};
 
 struct IsectInfo {
     int objId;

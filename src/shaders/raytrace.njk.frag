@@ -33,6 +33,109 @@ void IntersectSphere(const int objId, const int objIndex, const int objComponent
     }
 }
 
+void IntersectXYCylinder(const int objId, const int objIndex, const int objComponentId,
+                         const vec3 matColor,
+                         const vec3 center, const float r, const float len,
+                         vec3 rayOrigin, const vec3 rayDir, inout IsectInfo isectInfo){
+    rayOrigin = rayOrigin - center;
+    float a = rayDir.x * rayDir.x + rayDir.y * rayDir.y;
+    float b = 2. * ( rayOrigin.x * rayDir.x + rayOrigin.y * rayDir.y);
+    float c = rayOrigin.x * rayOrigin.x + rayOrigin.y * rayOrigin.y - r * r;
+    float d = b * b - 4. * a * c;
+    if(d >= 0.){
+        float s = sqrt(d);
+        float t = (-b - s) / (2. * a);
+        if(t <= INTERSECT_THRESHOLD) t = (-b + s) / (2. * a);
+        vec3 p = (rayOrigin + t * rayDir);
+        if(INTERSECT_THRESHOLD < t && t < isectInfo.tmin &&
+           0. < p.z && p.z < len){
+            isectInfo.objId = objId;
+            isectInfo.objIndex = objIndex;
+            isectInfo.objComponentId = objComponentId;
+            isectInfo.matColor = matColor;
+            isectInfo.tmin = t;
+            isectInfo.intersection = p;
+            isectInfo.normal = normalize(vec3(isectInfo.intersection.xy, 0));
+            isectInfo.hit = true;
+        }
+    }
+}
+
+void IntersectYZCylinder(const int objId, const int objIndex, const int objComponentId,
+                         const vec3 matColor,
+                         const vec3 center, const float r, const float len,
+                         vec3 rayOrigin, const vec3 rayDir, inout IsectInfo isectInfo){
+    rayOrigin = rayOrigin - center;
+    float a = rayDir.y * rayDir.y + rayDir.z * rayDir.z;
+    float b = 2. * ( rayOrigin.y * rayDir.y + rayOrigin.z * rayDir.z);
+    float c = rayOrigin.y * rayOrigin.y + rayOrigin.z * rayOrigin.z - r * r;
+    float d = b * b - 4. * a * c;
+    if(d >= 0.){
+        float s = sqrt(d);
+        float t = (-b - s) / (2. * a);
+        if(t <= INTERSECT_THRESHOLD) t = (-b + s) / (2. * a);
+        vec3 p = (rayOrigin + t * rayDir);
+        if(INTERSECT_THRESHOLD < t && t < isectInfo.tmin &&
+           0. < p.x && p.x < len){
+            isectInfo.objId = objId;
+            isectInfo.objIndex = objIndex;
+            isectInfo.objComponentId = objComponentId;
+            isectInfo.matColor = matColor;
+            isectInfo.tmin = t;
+            isectInfo.intersection = p;
+            isectInfo.normal = normalize(vec3(0, isectInfo.intersection.yz));
+            isectInfo.hit = true;
+        }
+    }
+}
+
+void IntersectXZCylinder(const int objId, const int objIndex, const int objComponentId,
+                         const vec3 matColor,
+                         const vec3 center, const float r, const float len,
+                         vec3 rayOrigin, const vec3 rayDir, inout IsectInfo isectInfo){
+    rayOrigin = rayOrigin - center;
+    float a = rayDir.x * rayDir.x + rayDir.z * rayDir.z;
+    float b = 2. * ( rayOrigin.x * rayDir.x + rayOrigin.z * rayDir.z);
+    float c = rayOrigin.x * rayOrigin.x + rayOrigin.z * rayOrigin.z - r * r;
+    float d = b * b - 4. * a * c;
+    if(d >= 0.){
+        float s = sqrt(d);
+        float t = (-b - s) / (2. * a);
+        if(t <= INTERSECT_THRESHOLD) t = (-b + s) / (2. * a);
+        vec3 p = (rayOrigin + t * rayDir);
+        if(INTERSECT_THRESHOLD < t && t < isectInfo.tmin &&
+           0. < p.y && p.y < len){
+            isectInfo.objId = objId;
+            isectInfo.objIndex = objIndex;
+            isectInfo.objComponentId = objComponentId;
+            isectInfo.matColor = matColor;
+            isectInfo.tmin = t;
+            isectInfo.intersection = p;
+            isectInfo.normal = normalize(vec3(isectInfo.intersection.x,
+                                              0,
+                                              isectInfo.intersection.z));
+            isectInfo.hit = true;
+        }
+    }
+}
+
+void IntersectAxisCylinders(const int objId, const int objIndex,
+                             const vec3 center, const float r, const float len,
+                             vec3 rayOrg, const vec3 rayDir, inout IsectInfo isectInfo) {
+    IntersectXYCylinder(objId, objIndex, -1,
+                        BLUE,
+                        center, r, len,
+                        rayOrg, rayDir, isectInfo);
+    IntersectYZCylinder(objId, objIndex, -1,
+                        PINK,
+                        center, r, len,
+                        rayOrg, rayDir, isectInfo);
+    IntersectXZCylinder(objId, objIndex, -1,
+                        GREEN,
+                        center, r, len,
+                        rayOrg, rayDir, isectInfo);
+}
+
 vec4 DistUnion(vec4 t1, vec4 t2) {
     return (t1.x < t2.x) ? t1 : t2;
 }
