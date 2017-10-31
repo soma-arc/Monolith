@@ -2,8 +2,9 @@ import Vec3 from '../geometry/vector3.js';
 import Plane from './plane.js';
 import Ray from '../geometry/ray.js';
 import IsectInfo from './isectInfo.js';
+import Shape from './shape.js';
 
-export default class Sphere {
+export default class Sphere extends Shape {
     /**
      *
      * @param {number} x
@@ -12,6 +13,7 @@ export default class Sphere {
      * @param {number} r
      */
     constructor (x, y, z, r) {
+        super();
         this.center = new Vec3(x, y, z);
         this.r = r;
         this.update();
@@ -21,29 +23,6 @@ export default class Sphere {
 
     update() {
         this.rSq = this.r * this.r;
-    }
-
-    setObjBasisUniformValues(gl, uniLocation, uniIndex) {
-        gl.uniform3f(uniLocation[uniIndex++],
-                     this.center.x, this.center.y, this.center.z);
-        gl.uniform1f(uniLocation[uniIndex++],
-                     this.basisRadius);
-        gl.uniform1f(uniLocation[uniIndex++],
-                     this.r);
-        gl.uniform1i(uniLocation[uniIndex++], false);
-        gl.uniform2f(uniLocation[uniIndex++], 0, 0);
-        return uniIndex;
-    }
-
-    setUniformValues(gl, uniLocation, uniIndex) {
-        let uniI = uniIndex;
-        gl.uniform3f(uniLocation[uniI++],
-                     this.center.x, this.center.y, this.center.z);
-        gl.uniform2f(uniLocation[uniI++],
-                     this.r, this.rSq);
-        gl.uniform1i(uniLocation[uniI++],
-                     this.selected);
-        return uniI;
     }
 
     cloneDeeply() {
