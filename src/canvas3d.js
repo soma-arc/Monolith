@@ -24,6 +24,9 @@ export default class Canvas3D extends Canvas {
     constructor(canvasId, scene, shaderTemplate) {
         super(canvasId);
         this.scene = scene;
+        this.scene.addSceneChangedListener(() => {
+            this.callRender();
+        });
         this.shaderTemplate = shaderTemplate;
         this.camera = new Camera(new Vec3(8, 0, 0),
                                  new Vec3(0, 0, 0),
@@ -240,14 +243,16 @@ export default class Canvas3D extends Canvas {
         this.canvas.focus();
         this.mouseState.isPressing = true;
         const mouse = this.calcCanvasCoord(event.clientX, event.clientY);
+        console.log(mouse);
         this.mouseState.prevPosition = mouse
         this.mouseState.button = event.button;
         if (event.button === Canvas.MOUSE_BUTTON_LEFT) {
             this.camera.mouseLeftDown(mouse);
         } else if (event.button === Canvas.MOUSE_BUTTON_RIGHT) {
-            const t = Transform.canvasRasterToScreen(this.canvas.width, this.canvas.height);
-            const hit = this.scene.selectObj(this.camera, mouse, t);
-            if (hit) this.callRender();
+            const t = Transform.canvasRasterToScreen(this.canvas.width,
+                                                     this.canvas.height);
+            const updated = this.scene.mouseRightDown(mouse, this.camera, t);
+            if (updated) this.callRender();
         }
     }
 
@@ -255,6 +260,7 @@ export default class Canvas3D extends Canvas {
     }
 
     mouseUpListener(event) {
+        this.scene.mouseUp();
         this.mouseState.isPressing = false;
         this.isRendering = false;
     }
@@ -268,7 +274,11 @@ export default class Canvas3D extends Canvas {
             this.isRendering = true;
             this.callRender();
         } else if (this.mouseState.button === Canvas.MOUSE_BUTTON_RIGHT) {
+            const t = Transform.canvasRasterToScreen(this.canvas.width, this.canvas.height);
+            this.scene.mouseRightMove(mouse, this.mouseState.prevPosition,
+                                      this.camera, t);
             this.isRendering = true;
+            this.callRender();
         }
     }
 

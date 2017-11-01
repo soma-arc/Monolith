@@ -117,4 +117,51 @@ export default class Camera {
         return new Ray(this.pos,
                        this.viewM.inverse().applyToVec(pCamera.normalize()));
     }
+
+    /**
+     * Transform world coordinate to canvas coordinate
+     * @param {Vec3} coordOnWorld
+     * @param {Transform} rasterToScreen
+     * @returns {Vec2}
+     */
+    coordOnCanvas(coordOnWorld, rasterToScreen) {
+        const vpM = this.projectM.mult(this.viewM);
+        const p = vpM.applyToPoint(coordOnWorld);
+        const np = rasterToScreen.inverse().applyToPoint(p);
+        return new Vec2(np.x, np.y);
+    }
+
+    /**
+     * Transform world vector to canvas coordinate
+     * @param {Vec3} v
+     */
+    dirOnCanvas(v) {
+        const vpM = this.projectM.mult(this.viewM);
+        const nv = vpM.applyToVec(v.normalize()).normalize();
+        return new Vec2(nv.x, -nv.y);
+    }
+
+    /**
+     *
+     * @returns {Vec2}
+     */
+    axisXDirOnCanvas() {
+        return this.dirOnCanvas(new Vec3(1, 0, 0));
+    }
+
+    /**
+     *
+     * @returns {Vec2}
+     */
+    axisYDirOnCanvas() {
+        return this.dirOnCanvas(new Vec3(0, 1, 0));
+    }
+
+    /**
+     *
+     * @returns {Vec2}
+     */
+    axisZDirOnCanvas() {
+        return this.dirOnCanvas(new Vec3(0, 0, 1));
+    }
 }

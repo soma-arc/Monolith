@@ -1,5 +1,7 @@
 import UniformLocation from '../uniformLocation.js';
+import Vec2 from '../geometry/vector2.js';
 import Vec3 from '../geometry/vector3.js';
+import Shape from './shape.js';
 import Plane from './plane.js';
 import Sphere from './sphere.js';
 import IsectInfo from './isectInfo.js';
@@ -15,13 +17,28 @@ export default class Scene {
                                        new Vec3(0, 0, 0),
                                        new Vec3(0, 0, 0),
                                        new Vec3(0, 1, 0))];
-        this.genSpheres = [new Sphere(0, 0, 0.6, 1),
-                           new Sphere(0.4, -1.0, 0, 1.3)];
+        this.genSpheres = [new Sphere(0, 0, 0.6, 0.8),
+                           new Sphere(0.4, -1.0, 0, 0.6),
+                           new Sphere(0, 0.0, 0, 0.5)
+                          ];
         this.genPlanes = Scene.PRISM_PLANES_333;
 
         this.selectingObj = undefined;
+        this.selectedAxisId = -1;
         this.axisCylinderR = 0.1;
         this.axisCylinderLen = 2;
+
+        this.sceneChangedListeners = [];
+    }
+
+    addSceneChangedListener(listener) {
+        this.sceneChangedListeners.push(listener);
+    }
+
+    sceneChanged() {
+        for (const listener of this.sceneChangedListeners) {
+            listener();
+        }
     }
 
     addCamera(camera) {
@@ -145,6 +162,7 @@ export default class Scene {
      * @param {Camera} camera
      * @param {Vec2} coord
      * @param {Transform} rasterToScreen
+     * @return {IsectInfo}
      */
     castRay(camera, coord, rasterToScreen) {
         const ray = camera.generatePerspectiveRay(coord, rasterToScreen);
@@ -157,14 +175,105 @@ export default class Scene {
 
     /**
      *
-     * @param {Camera} camera
      * @param {Vec2} coord
+     * @param {Camera} camera
      * @param {Transform} rasterToScreen
+     * @return {Boolean}
      */
-    selectObj(camera, coord, rasterToScreen) {
+    selectObj(coord, camera, rasterToScreen) {
+        if (this.selectingObj !== undefined) {
+            const ray = camera.generatePerspectiveRay(coord, rasterToScreen);
+            const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
+            this.selectingObj.computeIntersectionToAxis(ray, isectInfo,
+                                                        this.selectingObj.center,
+                                                        this.axisCylinderR,
+                                                        this.axisCylinderLen);
+            if (isectInfo.hitObject !== undefined) {
+                this.prevCenter = this.selectingObj.center;
+                this.selectedAxisId = isectInfo.isectComponentId;
+                return true;
+            }
+        }
         const isectInfo = this.castRay(camera, coord, rasterToScreen);
+        const isUpdated = this.selectingObj !== isectInfo.hitObject;
         this.selectingObj = isectInfo.hitObject;
-        return isectInfo.hitObject !== undefined;
+
+        return isUpdated;
+    }
+
+    /**
+     *
+     * @param {Vec2} mouse
+     * @return {Boolean}
+     */
+    mouseLeftDown(mouse) {
+        return false;
+    }
+
+    /**
+     * @param {Vec2} mouse
+     * @return {Boolean}
+     */
+    mouseRightDown(mouse, camera, rasterToScreen) {
+        const isUpdated = this.selectObj(mouse, camera, rasterToScreen);
+        return isUpdated;
+    }
+
+    /**
+     *
+     * @param {Vec2} mouse
+     * @param {Vec2} prevMouse
+     * @returns {Boolean}
+     */
+    mouseRightMove(mouse, prevMouse, camera, rasterToScreen) {
+        if (this.selectingObj === undefined) return false;
+        if (this.selectedAxisId === Shape.X_AXIS) {
+            const diffV = mouse.sub(prevMouse);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const xAxis = camera.axisXDirOnCanvas();
+            const d = Vec2.dot(diffV, xAxis);
+            const np = centerOnCanvas.add(xAxis.scale(d));
+            const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
+            const ray = camera.generatePerspectiveRay(np, rasterToScreen);
+            this.selectingObj.intersectXCylinder(ray, isectInfo,
+                                                 this.prevCenter, this.axisCylinderR);
+            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR));
+            this.sceneChanged();
+            return true;
+        } else if (this.selectedAxisId === Shape.Y_AXIS) {
+            const diffV = mouse.sub(prevMouse);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const yAxis = camera.axisYDirOnCanvas();
+            const d = Vec2.dot(diffV, yAxis);
+            const np = centerOnCanvas.add(yAxis.scale(d));
+            const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
+            const ray = camera.generatePerspectiveRay(np, rasterToScreen);
+            const r = this.axisCylinderR * 2;
+            this.selectingObj.intersectYCylinder(ray, isectInfo,
+                                                 this.prevCenter, r);
+            console.log(isectInfo.tmin);
+            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + r));
+            this.sceneChanged();
+            return true;
+        } else if (this.selectedAxisId === Shape.Z_AXIS) {
+            const diffV = mouse.sub(prevMouse);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const zAxis = camera.axisZDirOnCanvas();
+            const d = Vec2.dot(diffV, zAxis);
+            const np = centerOnCanvas.add(zAxis.scale(d));
+            const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
+            const ray = camera.generatePerspectiveRay(np, rasterToScreen);
+            this.selectingObj.intersectZCylinder(ray, isectInfo,
+                                                 this.prevCenter, this.axisCylinderR);
+            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR));
+            this.sceneChanged();
+            return true;
+        }
+        return false;
+    }
+
+    mouseUp() {
+        this.selectedAxisId = -1;
     }
 
     static get PRISM_PLANES_333 () {

@@ -82,6 +82,73 @@ export default class Shape {
     }
 
     /**
+     * @param {Ray} ray
+     * @param {IsectInfo} isectInfo
+     * @param {Vec3} center
+     * @param {Number} r
+     */
+    intersectZCylinder(ray, isectInfo,
+                       center, r) {
+        const rayPos = ray.o.sub(center);
+        const a = ray.d.x * ray.d.x + ray.d.y * ray.d.y;
+        const b = 2 * (rayPos.x * ray.d.x + rayPos.y * ray.d.y);
+        const c = rayPos.x * rayPos.x + rayPos.y * rayPos.y - r * r;
+        const d = b * b - 4 * a * c;
+        if (d >= 0) {
+            const s = Math.sqrt(d);
+            let t = (-b - s) / (2 * a);
+            if (t <= isectInfo.THRESHOLD) t = (-b + s) / (2 * a);
+            if (isectInfo.THRESHOLD < t && t < isectInfo.tmin) {
+                isectInfo.setInfo(t, this, Shape.Z_AXIS);
+            }
+        }
+    }
+
+    /**
+     * @param {Ray} ray
+     * @param {IsectInfo} isectInfo
+     * @param {Vec3} center
+     * @param {Number} r
+     */
+    intersectXCylinder(ray, isectInfo, center, r) {
+        const rayPos = ray.o.sub(center);
+        const a = ray.d.y * ray.d.y + ray.d.z * ray.d.z;
+        const b = 2 * (rayPos.y * ray.d.y + rayPos.z * ray.d.z);
+        const c = rayPos.y * rayPos.y + rayPos.z * rayPos.z - r * r;
+        const d = b * b - 4 * a * c;
+        if (d >= 0) {
+            const s = Math.sqrt(d);
+            let t = (-b - s) / (2 * a);
+            if (t <= isectInfo.THRESHOLD) t = (-b + s) / (2 * a);
+            if (isectInfo.THRESHOLD < t && t < isectInfo.tmin) {
+                isectInfo.setInfo(t, this, Shape.X_AXIS);
+            }
+        }
+    }
+
+    /**
+     * @param {Ray} ray
+     * @param {IsectInfo} isectInfo
+     * @param {Vec3} center
+     * @param {Number} r
+     */
+    intersectYCylinder(ray, isectInfo, center, r) {
+        const rayPos = ray.o.sub(center);
+        const a = ray.d.x * ray.d.x + ray.d.z * ray.d.z;
+        const b = 2 * (rayPos.x * ray.d.x + rayPos.z * ray.d.z);
+        const c = rayPos.x * rayPos.x + rayPos.z * rayPos.z - r * r;
+        const d = b * b - 4 * a * c;
+        if (d >= 0) {
+            const s = Math.sqrt(d);
+            let t = (-b - s) / (2 * a);
+            if (t <= isectInfo.THRESHOLD) t = (-b + s) / (2 * a);
+            if (isectInfo.THRESHOLD < t && t < isectInfo.tmin) {
+                isectInfo.setInfo(t, this, Shape.Y_AXIS);
+            }
+        }
+    }
+
+    /**
      *
      * @param {Ray} ray
      * @param {IsectInfo} isectInfo
