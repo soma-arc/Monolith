@@ -164,6 +164,26 @@ export default class Sphere extends Shape {
         }
     }
 
+    getOrigin() {
+        return this.center;
+    }
+
+    setOrigin(newOrigin) {
+        this.center = newOrigin;
+    }
+
+    getScale() {
+        return this.r;
+    }
+
+    /**
+     *
+     * @param {Number} newScale
+     */
+    setScale(newScale) {
+        this.r = newScale;
+    }
+
     static get BODY() {
         return 0;
     }

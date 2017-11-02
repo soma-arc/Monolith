@@ -163,6 +163,31 @@ export default class Shape {
         this.intersectZAxis(ray, isectInfo, center, axisCylinderR, axisCyliderLen);
     }
 
+    /**
+     *
+     * @returns {Vec3}
+     */
+    getOrigin() {
+        return new Vec3(0, 0, 0);
+    }
+
+    /**
+     *
+     * @param {Vec3} newOrigin
+     */
+    setOrigin(newOrigin) {
+    }
+
+    getScale() {
+    }
+
+    /**
+     *
+     * @param {Number} diff
+     */
+    setScale(diff) {
+    }
+
     static get X_AXIS() {
         return 99996;
     }

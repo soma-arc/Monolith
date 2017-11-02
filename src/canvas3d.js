@@ -294,9 +294,11 @@ export default class Canvas3D extends Canvas {
     }
 
     keydownListener(event) {
+        this.scene.keydown(event.key);
     }
 
     keyupListener(event) {
+        this.scene.keyup();
         this.isRendering = false;
     }
 

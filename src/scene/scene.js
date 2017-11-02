@@ -66,10 +66,11 @@ export default class Scene {
             'u_axisCylinders.origin',
             (uniLoc) => {
                 if (this.selectingObj !== undefined) {
+                    const o = this.selectingObj.getOrigin();
                     gl.uniform3f(uniLoc,
-                                 this.selectingObj.center.x,
-                                 this.selectingObj.center.y,
-                                 this.selectingObj.center.z);
+                                 o.x,
+                                 o.y,
+                                 o.z);
                 }
             }
         ));
@@ -189,7 +190,7 @@ export default class Scene {
                                                         this.axisCylinderR,
                                                         this.axisCylinderLen);
             if (isectInfo.hitObject !== undefined) {
-                this.prevCenter = this.selectingObj.center;
+                this.prevOrigin = this.selectingObj.getOrigin();
                 this.selectedAxisId = isectInfo.isectComponentId;
                 return true;
             }
@@ -215,6 +216,11 @@ export default class Scene {
      * @return {Boolean}
      */
     mouseRightDown(mouse, camera, rasterToScreen) {
+        if (this.operateScale) {
+            this.prevOrigin = this.selectingObj.getOrigin();
+            this.prevScale = this.selectingObj.getScale();
+            return false;
+        }
         const isUpdated = this.selectObj(mouse, camera, rasterToScreen);
         return isUpdated;
     }
@@ -227,22 +233,28 @@ export default class Scene {
      */
     mouseRightMove(mouse, prevMouse, camera, rasterToScreen) {
         if (this.selectingObj === undefined) return false;
-        if (this.selectedAxisId === Shape.X_AXIS) {
+        if (this.operateScale) {
+            const centerOnCanvas = camera.coordOnCanvas(this.prevOrigin, rasterToScreen);
+            const d1 = Vec2.distance(centerOnCanvas, prevMouse);
+            const d2 = Vec2.distance(centerOnCanvas, mouse);
+            this.selectingObj.setScale(this.prevScale + (d2 - d1));
+            this.sceneChanged();
+        } else if (this.selectedAxisId === Shape.X_AXIS) {
             const diffV = mouse.sub(prevMouse);
-            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevOrigin, rasterToScreen);
             const xAxis = camera.axisXDirOnCanvas();
             const d = Vec2.dot(diffV, xAxis);
             const np = centerOnCanvas.add(xAxis.scale(d));
             const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
             const ray = camera.generatePerspectiveRay(np, rasterToScreen);
             this.selectingObj.intersectXCylinder(ray, isectInfo,
-                                                 this.prevCenter, this.axisCylinderR);
-            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR));
+                                                 this.prevOrigin, this.axisCylinderR);
+            this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR)));
             this.sceneChanged();
             return true;
         } else if (this.selectedAxisId === Shape.Y_AXIS) {
             const diffV = mouse.sub(prevMouse);
-            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevOrigin, rasterToScreen);
             const yAxis = camera.axisYDirOnCanvas();
             const d = Vec2.dot(diffV, yAxis);
             const np = centerOnCanvas.add(yAxis.scale(d));
@@ -250,22 +262,21 @@ export default class Scene {
             const ray = camera.generatePerspectiveRay(np, rasterToScreen);
             const r = this.axisCylinderR * 2;
             this.selectingObj.intersectYCylinder(ray, isectInfo,
-                                                 this.prevCenter, r);
-            console.log(isectInfo.tmin);
-            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + r));
+                                                 this.prevOrigin, r);
+            this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + r)));
             this.sceneChanged();
             return true;
         } else if (this.selectedAxisId === Shape.Z_AXIS) {
             const diffV = mouse.sub(prevMouse);
-            const centerOnCanvas = camera.coordOnCanvas(this.prevCenter, rasterToScreen);
+            const centerOnCanvas = camera.coordOnCanvas(this.prevOrigin, rasterToScreen);
             const zAxis = camera.axisZDirOnCanvas();
             const d = Vec2.dot(diffV, zAxis);
             const np = centerOnCanvas.add(zAxis.scale(d));
             const isectInfo = new IsectInfo(Number.MAX_VALUE, Number.MAX_VALUE);
             const ray = camera.generatePerspectiveRay(np, rasterToScreen);
             this.selectingObj.intersectZCylinder(ray, isectInfo,
-                                                 this.prevCenter, this.axisCylinderR);
-            this.selectingObj.center = camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR));
+                                                 this.prevOrigin, this.axisCylinderR);
+            this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR)));
             this.sceneChanged();
             return true;
         }
@@ -274,6 +285,16 @@ export default class Scene {
 
     mouseUp() {
         this.selectedAxisId = -1;
+    }
+
+    keydown(key) {
+        if (key === 's' && this.selectingObj !== undefined) {
+            this.operateScale = true;
+        }
+    }
+
+    keyup() {
+        this.operateScale = false;
     }
 
     static get PRISM_PLANES_333 () {
