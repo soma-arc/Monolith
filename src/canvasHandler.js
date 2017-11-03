@@ -28,8 +28,16 @@ export default class CanvasHandler {
 
         this.prismCanvas.render();
         this.limitSetCanvas.render();
+        this.limitSetCanvas.keepSampling = true;
+        this.limitSetCanvas.isRenderingLowRes = true;
     }
 
     renderLoop() {
+        if (this.limitSetCanvas.isRendering) {
+            this.limitSetCanvas.numSamples = 0;
+            this.limitSetCanvas.callRender();
+        } else if (this.limitSetCanvas.keepSampling) {
+            this.limitSetCanvas.render();
+        }
     }
 }

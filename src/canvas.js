@@ -19,8 +19,11 @@ export default class Canvas {
         this.spheirahedraProgram = undefined;
         this.spheirahedraUniLocations = undefined;
 
+        this.keepSampling = false;
+        this.isRenderingLowRes = false;
+
         this.numSamples = 0;
-        this.maxSamples = 20;
+        this.maxSamples = 5;
         this.lowResRatio = 0.5;
     }
 

@@ -108,10 +108,11 @@ void main() {
     vec3 rayOrg = vec3(0);
     vec3 rayDir = vec3(0);
     float aspect = u_resolution.x / u_resolution.y;
-    vec2 coord = (aspect > 1.0) ?
-        (gl_FragCoord.xy / u_resolution.xy) * vec2(2. * aspect, 2.) - vec2(aspect, 1):
-        (gl_FragCoord.xy / u_resolution.xy) * vec2(2., 2. / aspect) - vec2(1, 1. / aspect);
 
+    vec2 coord = gl_FragCoord.xy + Rand2n(gl_FragCoord.xy, 0.);
+    coord = (aspect > 1.0) ?
+        (coord / u_resolution.xy) * vec2(2. * aspect, 2.) - vec2(aspect, 1):
+        (coord / u_resolution.xy) * vec2(2., 2. / aspect) - vec2(1, 1. / aspect);
     GeneratePerspectiveRay(coord, u_projectMatrix, u_cameraToWorld,
                            rayOrg, rayDir);
     vec4 texCol = texture(u_accTexture, gl_FragCoord.xy / u_resolution);

@@ -1,5 +1,13 @@
 const float INTERSECT_THRESHOLD = 0.0001;
 
+vec2 Rand2n(const vec2 co, const float sampleIndex) {
+    vec2 seed = co * (sampleIndex + 1.0);
+    seed+=vec2(-1,1);
+    // implementation based on: lumina.sourceforge.net/Tutorials/Noise.html
+    return vec2(fract(sin(dot(seed.xy ,vec2(12.9898,78.233))) * 43758.5453),
+                fract(cos(dot(seed.xy ,vec2(4.898,7.23))) * 23421.631));
+}
+
 void GeneratePerspectiveRay(vec2 coord, mat4 projectMatrix,
                             mat4 cameraToWorld,
                             out vec3 rayOrg, out vec3 rayDir) {

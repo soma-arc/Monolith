@@ -45,8 +45,6 @@ export default class Canvas3D extends Canvas {
         this.maxIterations = 50;
         this.isRendering = false;
 
-        this.isKeepingSampling = false;
-        this.isRenderingLowRes = false;
         this.renderTimer = undefined;
 
         this.aoEps = 0.0968;
@@ -226,7 +224,7 @@ export default class Canvas3D extends Canvas {
         this.renderToTexture(this.renderTextures,
                              this.canvas.width, this.canvas.height);
         this.renderTexturesToCanvas(this.renderTextures);
-        if (this.isKeepingSampling) {
+        if (this.keepSampling) {
             this.numSamples++;
         }
     }
@@ -243,7 +241,6 @@ export default class Canvas3D extends Canvas {
         this.canvas.focus();
         this.mouseState.isPressing = true;
         const mouse = this.calcCanvasCoord(event.clientX, event.clientY);
-        console.log(mouse);
         this.mouseState.prevPosition = mouse
         this.mouseState.button = event.button;
         if (event.button === Canvas.MOUSE_BUTTON_LEFT) {
@@ -252,7 +249,7 @@ export default class Canvas3D extends Canvas {
             const t = Transform.canvasRasterToScreen(this.canvas.width,
                                                      this.canvas.height);
             const updated = this.scene.mouseRightDown(mouse, this.camera, t);
-            if (updated) this.callRender();
+            if (updated) this.isRendering = true;
         }
     }
 
@@ -288,7 +285,7 @@ export default class Canvas3D extends Canvas {
                              this.canvas.width * this.lowResRatio,
                              this.canvas.height * this.lowResRatio);
         this.renderTexturesToCanvas(this.lowResTextures);
-        if (this.isKeepingSampling === false) {
+        if (this.keepSampling === false) {
             this.renderTimer = window.setTimeout(this.render.bind(this), 200);
         }
     }
