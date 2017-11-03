@@ -28,7 +28,7 @@ const vec3 AMBIENT_FACTOR = vec3(0.1);
 const vec3 LIGHT_DIR = normalize(vec3(1, 1, 0));
 
 const int MAX_MARCHING_LOOP = 3000;
-const float MARCHING_THRESHOLD = 0.001;
+const float MARCHING_THRESHOLD = 0.00001;
 void march(const vec3 rayOrg, const vec3 rayDir,
            inout IsectInfo isectInfo) {
     float rayLength = 0.;
@@ -51,6 +51,38 @@ void march(const vec3 rayOrg, const vec3 rayDir,
             break;
         }
     }
+}
+
+// This function is based on FractalLab's implementation
+// http://hirnsohle.de/test/fractalLab/
+float ambientOcclusion(vec3 p, vec3 n, float eps, float aoIntensity ){
+    float o = 1.0;
+    float k = aoIntensity;
+    float d = 2.0 * eps;
+
+    for (int i = 0; i < 5; i++) {
+        o -= (d - distFunc(p + n * d).x) * k;
+        d += eps;
+        k *= 0.5;
+    }
+
+    return clamp(o, 0.0, 1.0);
+}
+
+float computeShadowFactor (const vec3 rayOrg, const vec3 rayDir,
+                           const float mint, const float maxt, const float k) {
+    float shadowFactor = 1.0;
+    for(float t = mint ; t < maxt ;){
+        float d = distFunc(rayOrg + rayDir * t).x;
+        if(d < MARCHING_THRESHOLD) {
+            shadowFactor = 0.;
+            break;
+        }
+
+        shadowFactor = min(shadowFactor, k * d / t);
+        t += d;
+    }
+    return clamp(shadowFactor, 0.0, 1.0);
 }
 
 vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
@@ -85,7 +117,12 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
                 isectInfo = NewIsectInfo();
                 continue;
             } else {
-                l += (diffuse + ambient) * coeff;
+                float k =  computeShadowFactor(isectInfo.intersection + 0.001 * isectInfo.normal,
+                                                             LIGHT_DIR,
+                                                             0.1, 5., 100.) ;
+                l += (diffuse * k + ambient * ambientOcclusion(isectInfo.intersection,
+                                                               isectInfo.normal,
+                                                               0.0968, 2.0)) * coeff;
                 break;
             }
         }
