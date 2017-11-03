@@ -169,6 +169,16 @@ float DistInfPrism(vec3 pos) {
     return d;
 }
 
+float DistSphairahedron(vec3 pos) {
+    float d = DistSphere(pos, Sphere(vec3(0), vec2(1, 1)));
+
+    {% for n in range(0, numGenSpheres) %}
+	d = max(-DistSphere(pos, u_genSpheres[{{ n }}]),
+			d);
+	{% endfor %}
+    return d;
+}
+
 void SphereInvert(inout vec3 pos, inout float dr,
                          const Sphere s) {
     vec3 diff = pos - s.center;
@@ -180,7 +190,7 @@ void SphereInvert(inout vec3 pos, inout float dr,
 
 
 float G_IISInvNum = 0.;
-float DistLimiSet(vec3 pos) {
+float DistTerrainLimiSet(vec3 pos) {
     float invNum = 0.;
     float dr = 1.;
     float d = 0.;
@@ -213,4 +223,27 @@ float DistLimiSet(vec3 pos) {
 
     G_IISInvNum = invNum;
     return DistInfPrism(pos) / abs(dr) * u_fudgeFactor;
+}
+
+float DistLimiSet(vec3 pos) {
+    float invNum = 0.;
+    float dr = 1.;
+    float d = 0.;
+    for(int i = 0; i< 1000; i++) {
+        if(u_maxIISIterations <= i) break;
+        bool inFund = true;
+        {% for n in range(0, numGenSpheres) %}
+		if(distance(pos, u_genSpheres[{{ n }}].center) < u_genSpheres[{{ n }}].r.x) {
+            invNum++;
+			SphereInvert(pos, dr, u_genSpheres[{{ n }}]);
+			continue;
+		}
+		{% endfor %}
+
+        if(inFund)
+            break;
+    }
+
+    G_IISInvNum = invNum;
+    return DistSphairahedron(pos) / abs(dr) * u_fudgeFactor;
 }

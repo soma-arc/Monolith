@@ -8,12 +8,11 @@ precision mediump float;
 
 const int ID_PRISM = 0;
 const int ID_GEN_SPHERE = 1;
-const int ID_LIMIT_SET = 2;
 
 vec4 distFunc(const vec3 pos) {
     vec4 d = vec4(MAX_FLOAT, -1, -1, -1);
     d = DistUnion(d,
-                  vec4(DistTerrainLimiSet(pos), ID_LIMIT_SET, -1, -1));
+                  vec4(DistSphairahedron(pos), ID_PRISM, -1, -1));
     return d;
 }
 
@@ -28,7 +27,7 @@ const vec3 AMBIENT_FACTOR = vec3(0.1);
 const vec3 LIGHT_DIR = normalize(vec3(1, 1, 0));
 
 const int MAX_MARCHING_LOOP = 3000;
-const float MARCHING_THRESHOLD = 0.00001;
+const float MARCHING_THRESHOLD = 0.001;
 void march(const vec3 rayOrg, const vec3 rayDir,
            inout IsectInfo isectInfo) {
     float rayLength = 0.;
@@ -43,7 +42,7 @@ void march(const vec3 rayOrg, const vec3 rayDir,
             isectInfo.objId = int(dist.y);
             //isectInfo.objIndex = int(dist.z);
             //isectInfo.objComponentId = int(dist.w);
-            isectInfo.matColor = Hsv2rgb((1., -0.13 + (G_IISInvNum) * 0.01), 1., 1.);
+            isectInfo.matColor = vec3(0.7);
             isectInfo.intersection = rayPos;
             isectInfo.normal = computeNormal(rayPos);
             isectInfo.tmin = rayLength;
@@ -51,38 +50,6 @@ void march(const vec3 rayOrg, const vec3 rayDir,
             break;
         }
     }
-}
-
-// This function is based on FractalLab's implementation
-// http://hirnsohle.de/test/fractalLab/
-float ambientOcclusion(vec3 p, vec3 n, float eps, float aoIntensity ){
-    float o = 1.0;
-    float k = aoIntensity;
-    float d = 2.0 * eps;
-
-    for (int i = 0; i < 5; i++) {
-        o -= (d - distFunc(p + n * d).x) * k;
-        d += eps;
-        k *= 0.5;
-    }
-
-    return clamp(o, 0.0, 1.0);
-}
-
-float computeShadowFactor (const vec3 rayOrg, const vec3 rayDir,
-                           const float mint, const float maxt, const float k) {
-    float shadowFactor = 1.0;
-    for(float t = mint ; t < maxt ;){
-        float d = distFunc(rayOrg + rayDir * t).x;
-        if(d < MARCHING_THRESHOLD) {
-            shadowFactor = 0.;
-            break;
-        }
-
-        shadowFactor = min(shadowFactor, k * d / t);
-        t += d;
-    }
-    return clamp(shadowFactor, 0.0, 1.0);
 }
 
 vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
@@ -94,16 +61,25 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
     float transparency = 0.8;
     float coeff = 1.;
 
+    if(u_selectingObj) {
+        IntersectAxisCylinders(-1, -1,
+                               u_axisCylinders.origin,
+                               u_axisCylinders.cylinderR,
+                               u_axisCylinders.cylinderLen,
+                               rayPos, rayDir, isectInfo);
+        if (isectInfo.hit) return vec4(isectInfo.matColor, 1);
+    }
+
     for(int depth = 0 ; depth < 8; depth++){
         march(rayPos, rayDir, isectInfo);
 
-        // {% for n in range(0, numGenSpheres) %}
-        // IntersectSphere(ID_GEN_SPHERE, {{ n }}, -1,
-        //                 Hsv2rgb(float({{ n }}) * 0.3, 1., 1.),
-        //                 u_genSpheres[{{ n }}],
-        //                 rayPos, rayDir, isectInfo);
-        // {% endfor %}
-        
+        {% for n in range(0, numGenSpheres) %}
+        IntersectSphere(ID_GEN_SPHERE, {{ n }}, -1,
+                        Hsv2rgb(float({{ n }}) * 0.3, 1., 1.),
+                        u_genSpheres[{{ n }}],
+                        rayPos, rayDir, isectInfo);
+        {% endfor %}
+
         if(isectInfo.hit) {
             vec3 matColor = isectInfo.matColor;
             vec3 diffuse =  clamp(dot(isectInfo.normal, LIGHT_DIR), 0., 1.) * matColor;
@@ -117,18 +93,13 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
                 isectInfo = NewIsectInfo();
                 continue;
             } else {
-                float k =  computeShadowFactor(isectInfo.intersection + 0.001 * isectInfo.normal,
-                                                             LIGHT_DIR,
-                                                             0.1, 5., 100.) ;
-                l += (diffuse * k + ambient * ambientOcclusion(isectInfo.intersection,
-                                                               isectInfo.normal,
-                                                               0.0968, 2.0)) * coeff;
+                l += (diffuse + ambient) * coeff;
                 break;
             }
         }
         break;
     }
-    
+
     return vec4(l, alpha);
 }
 
