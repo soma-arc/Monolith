@@ -34,7 +34,7 @@ export default class Scene {
                            new Sphere(-0.1289891724322335,
                                       1.2031274226435003,
                                       -0.2234158002788912,
-                                      0.742021655135533)
+                                      0.742021655135533),
                           ];
         this.genPlanes = Scene.PRISM_PLANES_333;
 
@@ -44,6 +44,7 @@ export default class Scene {
         this.axisCylinderLen = 2;
 
         this.sceneChangedListeners = [];
+        this.parameterChanging = false;
     }
 
     addSceneChangedListener(listener) {
@@ -254,6 +255,7 @@ export default class Scene {
             const d2 = Vec2.distance(centerOnCanvas, mouse);
             this.selectingObj.setScale(this.prevScale + (d2 - d1));
             this.sceneChanged();
+            this.parameterChanging = true;
         } else if (this.selectedAxisId === Shape.X_AXIS) {
             const diffV = mouse.sub(prevMouse);
             const centerOnCanvas = camera.coordOnCanvas(this.prevOrigin, rasterToScreen);
@@ -266,6 +268,7 @@ export default class Scene {
                                                  this.prevOrigin, this.axisCylinderR);
             this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR)));
             this.sceneChanged();
+            this.parameterChanging = true;
             return true;
         } else if (this.selectedAxisId === Shape.Y_AXIS) {
             const diffV = mouse.sub(prevMouse);
@@ -280,6 +283,7 @@ export default class Scene {
                                                  this.prevOrigin, r);
             this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + r)));
             this.sceneChanged();
+            this.parameterChanging = true;
             return true;
         } else if (this.selectedAxisId === Shape.Z_AXIS) {
             const diffV = mouse.sub(prevMouse);
@@ -293,12 +297,14 @@ export default class Scene {
                                                  this.prevOrigin, this.axisCylinderR);
             this.selectingObj.setOrigin(camera.pos.add(ray.d.scale(isectInfo.tmin + this.axisCylinderR)));
             this.sceneChanged();
+            this.parameterChanging = true;
             return true;
         }
         return false;
     }
 
     mouseUp() {
+        this.parameterChanging = false;
         this.selectedAxisId = -1;
     }
 

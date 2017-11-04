@@ -24,9 +24,7 @@ export default class Canvas3D extends Canvas {
     constructor(canvasId, scene, shaderTemplate) {
         super(canvasId);
         this.scene = scene;
-        this.scene.addSceneChangedListener(() => {
-            this.callRender();
-        });
+
         this.shaderTemplate = shaderTemplate;
         this.camera = new Camera(new Vec3(8, 0, 0),
                                  new Vec3(0, 0, 0),
@@ -269,13 +267,11 @@ export default class Canvas3D extends Canvas {
         if (this.mouseState.button === Canvas.MOUSE_BUTTON_LEFT) {
             this.camera.mouseLeftMove(mouse, this.mouseState.prevPosition);
             this.isRendering = true;
-            this.callRender();
         } else if (this.mouseState.button === Canvas.MOUSE_BUTTON_RIGHT) {
             const t = Transform.canvasRasterToScreen(this.canvas.width, this.canvas.height);
             this.scene.mouseRightMove(mouse, this.mouseState.prevPosition,
                                       this.camera, t);
             this.isRendering = true;
-            this.callRender();
         }
     }
 

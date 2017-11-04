@@ -33,7 +33,13 @@ export default class CanvasHandler {
     }
 
     renderLoop() {
-        if (this.limitSetCanvas.isRendering) {
+        if (this.scene.parameterChanging) {
+            this.prismCanvas.callRender();
+            this.limitSetCanvas.numSamples = 0;
+            this.limitSetCanvas.callRender();
+        } else if (this.prismCanvas.isRendering) {
+            this.prismCanvas.callRender();
+        } else if (this.limitSetCanvas.isRendering) {
             this.limitSetCanvas.numSamples = 0;
             this.limitSetCanvas.callRender();
         } else if (this.limitSetCanvas.keepSampling) {
