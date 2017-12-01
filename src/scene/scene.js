@@ -13,30 +13,66 @@ export default class Scene {
     constructor() {
         this.cameras = [];
 
-        this.dividePlanes = [new Plane(new Vec3(1.0000000000000004,
-                                                2.220446049250313e-15,
-                                                -6.8833827526759706e-15),
-                                       new Vec3(-0.5000000000000016,
-                                                0.5996460691794592,
-                                                0.8660254037844405),
-                                       new Vec3(-0.49999999999999123,
-                                                1.2031274226435167,
-                                                -0.8660254037844431),
-                                       new Vec3(0.4935390911234646,
-                                                0.8212996696957096,
-                                                0.2861573310099587).normalize())];
-        this.genSpheres = [new Sphere(0.25951645676326907,
-                                      0,
-                                      0, 0.7404835432367309),
-                           new Sphere(-0.31031253690463534,
-                                      0.5996460691794626,
-                                      0.5374770801444206, 0.3793749261907293),
-                           new Sphere(-0.1289891724322335,
-                                      1.2031274226435003,
-                                      -0.2234158002788912,
-                                      0.742021655135533),
-                          ];
-        this.genPlanes = Scene.PRISM_PLANES_333;
+        // this.dividePlanes = [new Plane(new Vec3(1.0000000000000004,
+        //                                         2.220446049250313e-15,
+        //                                         -6.8833827526759706e-15),
+        //                                new Vec3(-0.5000000000000016,
+        //                                         0.5996460691794592,
+        //                                         0.8660254037844405),
+        //                                new Vec3(-0.49999999999999123,
+        //                                         1.2031274226435167,
+        //                                         -0.8660254037844431),
+        //                                new Vec3(0.4935390911234646,
+        //                                         0.8212996696957096,
+        //                                         0.2861573310099587).normalize())];
+        // this.genSpheres = [new Sphere(0.25951645676326907,
+        //                               0,
+        //                               0, 0.7404835432367309),
+        //                    new Sphere(-0.31031253690463534,
+        //                               0.5996460691794626,
+        //                               0.5374770801444206, 0.3793749261907293),
+        //                    new Sphere(-0.1289891724322335,
+        //                               1.2031274226435003,
+        //                               -0.2234158002788912,
+        //                               0.742021655135533),
+        //                   ];
+
+        // this.genPlanes = Scene.PRISM_PLANES_333;
+
+        this.dividePlanes = [];
+
+        const tp1 = new Vec3(1, 0, 0);
+        const tp2 = new Vec3(-0.5, 1, 1);
+        const tp3 = new Vec3(-0.5, 1, -1);
+        this.controlPoints = [tp1, tp1.add(tp2.sub(tp1).scale(0.5)),
+                              tp2, tp2.add((tp3.sub(tp2)).scale(0.5)),
+                              tp3, tp3.add((tp1.sub(tp3)).scale(0.5)),
+                              new Vec3(0, 0.5, 0)];
+        this.sphereVertIndexes = [[0, 1, 5, 6], [1, 2, 3, 6], [3, 4, 5, 6]];
+        this.planeVertIndexes = [[0, 1, 2], [2, 3, 4], [4, 5, 0]];
+        console.log('sphere')
+        this.genSpheres = [];
+        for (const indexes of this.sphereVertIndexes) {
+            this.genSpheres.push(Sphere.fromPoints(this.controlPoints[indexes[0]],
+                                                   this.controlPoints[indexes[1]],
+                                                   this.controlPoints[indexes[2]],
+                                                   this.controlPoints[indexes[3]]));
+        }
+        console.log('gened')
+        this.genPlanes = [];
+        for (const indexes of this.planeVertIndexes) {
+            const v = this.controlPoints[indexes[2]].sub(this.controlPoints[indexes[0]]);
+            const vSphere = (this.genSpheres[0].center.sub(this.controlPoints[indexes[0]]));
+            let normal = new Vec3(-v.z, 0, v.x).normalize();
+            if (Vec3.dot(normal, vSphere) > 0) {
+                normal = normal.scale(-1);
+            }
+            this.genPlanes.push(new Plane(this.controlPoints[indexes[0]],
+                                          this.controlPoints[indexes[1]],
+                                          this.controlPoints[indexes[2]],
+                                          normal));
+        }
+        console.log(this.genPlanes);
 
         this.selectingObj = undefined;
         this.selectedAxisId = -1;
@@ -65,7 +101,8 @@ export default class Scene {
         return {
             'numGenPlanes': this.genPlanes.length,
             'numGenSpheres': this.genSpheres.length,
-            'numDividePlanes': this.dividePlanes.length
+            'numDividePlanes': this.dividePlanes.length,
+            'numControlPoints': this.controlPoints.length
         }
     }
 
@@ -171,6 +208,20 @@ export default class Scene {
                 }
             ));
         }
+
+        for (let i = 0; i < this.controlPoints.length; i++) {
+            uniLocations.push(new UniformLocation(
+                gl, program,
+                'u_controlPoints['+ i +']',
+                (uniLoc) => {
+                    gl.uniform3f(uniLoc,
+                                 this.controlPoints[i].x,
+                                 this.controlPoints[i].y,
+                                 this.controlPoints[i].z);
+                }
+            ));
+        }
+
         return uniLocations;
     }
 

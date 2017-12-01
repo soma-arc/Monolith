@@ -18,3 +18,6 @@ uniform Plane u_genPlanes[{{ numGenPlanes }}];
 {% if numDividePlanes > 0 %}
 uniform Plane u_dividePlanes[{{ numDividePlanes }}];
 {% endif %}
+{% if numControlPoints > 0 %}
+uniform vec3 u_controlPoints[{{ numControlPoints }}];
+{% endif %}

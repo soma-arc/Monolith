@@ -80,6 +80,16 @@ vec4 computeColor(const vec3 rayOrg, const vec3 rayDir) {
                         rayPos, rayDir, isectInfo);
         {% endfor %}
 
+        {% for n in range(0, numControlPoints) %}
+        Sphere ss{{ n }};
+        ss{{ n }}.center = u_controlPoints[{{ n }}];
+        ss{{ n }}.r.x = 0.1;
+        IntersectSphere(1, {{ n }}, -1,
+                        Hsv2rgb(float({{ n }}) * 0.3, 1., 1.),
+                        ss{{ n }},
+                        rayPos, rayDir, isectInfo);
+        {% endfor %}
+
         if(isectInfo.hit) {
             vec3 matColor = isectInfo.matColor;
             vec3 diffuse =  clamp(dot(isectInfo.normal, LIGHT_DIR), 0., 1.) * matColor;
